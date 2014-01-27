@@ -335,14 +335,29 @@ connection.prototype.sendpacket = function(t, p){
   var self = this;
     put().word16le(p ? p.length + 3 : 3).word8(t).write(self.sock)
     if(p) self.sock.write(p.toBuffer())
-}
+};
+
 connection.prototype.send_rcon = function(cmd){
   var self = this;
   var bufs = Buffers();
   bufs.push(Buffer(cmd));
   bufs.push(zeroterm());
   self.sendpacket(adminPackets.ADMIN_RCON, bufs);
-}
+};
+
+connection.prototype.send_chat = function(action, desttype, id, msg){
+  var self = this;
+  var bufs = Buffers();
+  bufs.push(put()
+    .word8(action)
+    .word8(desttype)
+    .word32(id)
+    .buffer());
+  bufs.push(Buffer(msg));
+  bufs.push(zeroterm());
+  self.sendpacket(adminPackets.ADMIN_CHAT, bufs);
+};
+
 connection.prototype.error = function(errorMsg){
   console.log("ERROR: ", errorMsg);
   self.emit('error', errorMsg);
@@ -358,7 +373,20 @@ connection.prototype.send_update_frequency = function(type, frequency){
   self.sendpacket(adminPackets.ADMIN_UPDATE_FREQUENCY, bufs);
   
 };
+connection.prototype.send_poll = function(type, id){
+  var self = this;
+  var bufs = Buffers();
+  bufs.push(put()
+    .word8(type)
+    .word32le(id)
+    .buffer());
+  self.sendpacket(adminPackets.ADMIN_POLL, bufs);
 
+}
+connection.prototype.close = function(){
+  self.sendpacket(adminPackets.ADMIN_QUIT);
+  this.sock.end();
+};
 
 var zeroterm = (function(){
     var b = put().word8(0).buffer()
