@@ -1,0 +1,13 @@
+{
+  "name": "libOpenttdAdmin",
+  "version": "0.0.1",
+  "description": "A Node.js Library for connecting to Openttd's admin interface.",
+  "main": "main.js",
+  "author": "Sam Bolingbroke",
+  "dependencies": {
+    "buffers": "0.1.1",
+    "binary": "0.3.0",
+    "put": "0.0.6"
+
+  }
+}
