@@ -32,7 +32,6 @@ var connection  = function (){
 };
 
 connection.prototype = new EventEmitter;
-
 connection.prototype.sock = false;
 connection.prototype.buffer = Buffers();
 connection.prototype.binaryStreamer = binary()
@@ -169,6 +168,151 @@ connection.prototype.connect = function(server, port){
                   });
               });
               break;
+            case adminPackets.SERVER_COMPANY_INFO:
+              this.into("company", function(vars){
+
+                this
+                  .word8('id')
+                  .scan('name', zeroterm())
+                  .tap(function(vars){ vars.name = vars.name.toString();})
+                  .scan('manager', zeroterm())
+                  .tap(function(vars){ vars.manager = vars.manager.toString();})
+                  .word8('colour')
+                  .word8('protected')
+                  .word32le('startyear')
+                  .word8('isai')
+                  .tap(function(company){
+                    self.emit('companyinfo', company)
+                  });
+              });
+              break;
+            case adminPackets.SERVER_COMPANY_UPDATE:
+              this.into("company", function(vars){
+                this
+                  .word8('id')
+                  .scan('name', zeroterm())
+                  .tap(function(vars){ vars.name = vars.name.toString();})
+                  .scan('manager', zeroterm())
+                  .tap(function(vars){ vars.manager = vars.manager.toString();})
+                  .word8('colour')
+                  .word8('protected')
+                  .word8('bankruptcy')
+                  .into('shares', function(){
+                    this
+                      .word8('1')
+                      .word8('2')
+                      .word8('3')
+                      .word8('4')
+                  })
+                  .tap(function(company){
+                    self.emit('companyupdate', company);
+                  });
+              });
+              break;
+            case adminPackets.SERVER_COMPANY_REMOVE:
+              this.into("company", function(vars){
+                this
+                  .word8('id')
+                  .word8('reason')
+                  .tap(function(company){
+                    self.emit('companyremove', company);
+                  });
+              break;
+
+            case adminPackets.SERVER_COMPANY_ECONOMY:
+              this.into("company", function(vars){
+                this
+                  .word8('id')
+                  .word64les('money')
+                  .word64le('loan')
+                  .word64les('income')
+                  .into('lastquarter', function(){
+                    this
+                      .word64le('value')
+                      .word64le('performance')
+                      .word64le('cargo')
+                  })
+                  .into('prevquarter', function(){
+                    this
+                      .word64le('value')
+                      .word64le('performance')
+                      .word64le('cargo')
+                  });
+                  .tap(function(company){
+                    self.emit('companyeconomy', company);
+                  });
+              });
+              break;
+            case adminPackets.SERVER_COMPANY_STATS:
+              this.into("company", function(vars){
+
+                this
+                  .word8('id')
+                  .into('vehicles', function(){
+                    this
+                      .word64le('trains')
+                      .word64le('lorries')
+                      .word64le('busses')
+                      .word64le('planes')
+                      .word64le('ships')
+                  })
+                  .into('stations', function(){
+                    this
+                      .word64le('trains')
+                      .word64le('lorries')
+                      .word64le('busses')
+                      .word64le('planes')
+                      .word64le('ships')
+                  })
+                  .tap(function(company){
+                    self.emit('companystats', company);
+                  });
+              });
+              break;
+            case adminPackets.SERVER_CHAT:
+              this.into('chat', function(){
+                this
+                  .word8('action')
+                  .word8('desttype')
+                  .word8('id')
+                  .word32le('id')
+                  .scan('message', zeroterm())
+                  .tap(function(vars){ vars.message = vars.message.toString();})
+                  .word64le('money')
+                  .tap(function(message){
+                    self.emit('chat', message);
+                  });
+              });
+            
+              break;
+            case adminPackets.SERVER_RCON:
+              this.into('rcon', function(){
+                this
+                  .word16('colour')
+                  .scan('output', zeroterm())
+                  .tap(function(vars){ vars.output = vars.output.toString();})
+                  .tap(function(rcon){
+                    self.emit('rcon', rcon);
+                  });
+
+              });
+            
+              break;
+            
+            case adminPackets.SERVER_CONSOLE:
+              this.into('rcon', function(){
+                this
+                  .scan('origin', zeroterm())
+                  .tap(function(vars){ vars.origin = vars.origin.toString();})
+                  .scan('output', zeroterm())
+                  .tap(function(vars){ vars.output = vars.output.toString();})
+                  .tap(function(rcon){
+                    self.emit('rcon', rcon);
+                  });
+              });
+              break;
+            
+            
           }
         });
     });
