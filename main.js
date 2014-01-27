@@ -55,7 +55,6 @@ connection.prototype.connect = function(server, port){
             case adminPackets.SERVER_PROTOCOL:
             this
               .word8("version")
-              .word8("datafollowing")
               .tap(function(vars){
                 self.emit("authenticate", vars);
               });
@@ -217,6 +216,7 @@ connection.prototype.connect = function(server, port){
                   .tap(function(company){
                     self.emit('companyremove', company);
                   });
+                });
               break;
 
             case adminPackets.SERVER_COMPANY_ECONOMY:
@@ -237,7 +237,7 @@ connection.prototype.connect = function(server, port){
                       .word64le('value')
                       .word64le('performance')
                       .word64le('cargo')
-                  });
+                  })
                   .tap(function(company){
                     self.emit('companyeconomy', company);
                   });
@@ -274,7 +274,6 @@ connection.prototype.connect = function(server, port){
                 this
                   .word8('action')
                   .word8('desttype')
-                  .word8('id')
                   .word32le('id')
                   .scan('message', zeroterm())
                   .tap(function(vars){ vars.message = vars.message.toString();})
@@ -300,14 +299,14 @@ connection.prototype.connect = function(server, port){
               break;
             
             case adminPackets.SERVER_CONSOLE:
-              this.into('rcon', function(){
+              this.into('console', function(){
                 this
                   .scan('origin', zeroterm())
                   .tap(function(vars){ vars.origin = vars.origin.toString();})
                   .scan('output', zeroterm())
                   .tap(function(vars){ vars.output = vars.output.toString();})
                   .tap(function(rcon){
-                    self.emit('rcon', rcon);
+                    self.emit('console', console);
                   });
               });
               break;
