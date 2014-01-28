@@ -69,18 +69,18 @@ Examples can be found in the `examples/` folder
 There are several enums provided,these are taken almost directly from yorickvP/node-ottdadmin.
 This is just a list of them. Rather than listing all the entries here, please see `enums.js`
 
-+UpdateTypes
-+UpdateFrequencies
-+CompanyRemoveReasons
-+Actions
-+DestTypes
-+NetworkErrorCodes
++ UpdateTypes
++ UpdateFrequencies
++ CompanyRemoveReasons
++ Actions
++ DestTypes
++ NetworkErrorCodes
     
 ## Todo
 Just a little todo for me :)
 
-[x] Write initial documentation
-[ ] Look up unknowns in documentation
-[ ] Break up long switch into functions in another file
-[ ] work out some way of doing tests
-[ ] Proof read everything
++ ~~Write initial documentation~~
++ Look up unknowns in documentation
++ Break up long switch into functions in another file
++ work out some way of doing tests
++ Proof read everything
