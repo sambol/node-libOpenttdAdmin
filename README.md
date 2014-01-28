@@ -30,34 +30,6 @@ Examples can be found in the `examples/` folder
 
 ## Functions
 
-<table>
-  <thead>
-    <tr>
-      <td>Name</td>
-      <td>Description</td>
-      <td>parameters</td>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>`authenticate`</td>
-      <td>Send and authentication request - this must be performed within 10 seconds of the server connecting </td>
-      <td>
-        <ul><li>`username` - name of the client (can be null for a default)</li><li>`password` - server admin password</li></ul>
-      </td>
-    </tr>
-    <tr>
-      <td>`send_rcon`</td>
-      <td>Send an rcon command</td>
-        <td>
-        <ul>
-          <li>`command` - command to execute on the server</li> 
-        </ul>
-      </td>
-
-    </tr>
-  </tbody>
-</table>
 
 | Function Name       | Description                                                                               | parameters                            |
 | ------------------- | :---------------------------------------------------------------------------------------: | :-----------------------------------: |
