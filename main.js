@@ -46,7 +46,6 @@ connection.prototype.connect = function(server, port){
   self.sock.on("connect", function(){
     self.emit("connect");
     self.sock.on("data", function(buf){
-      // console.log("data", buf.toString());
       binary.parse(buf)
         .word16le('pcktlen')
         .word8('pckttype')
@@ -78,7 +77,6 @@ connection.prototype.connect = function(server, port){
                       .word16le('mapwidth')
                   })
                   .tap(function(welcomeData){
-                    //User Does not need these
                     self.emit('welcome', welcomeData)
                   });
                 });
@@ -358,6 +356,7 @@ connection.prototype.send_chat = function(action, desttype, id, msg){
 };
 
 connection.prototype.error = function(errorMsg){
+  var self = this;
   console.log("ERROR: ", errorMsg);
   self.emit('error', errorMsg);
 };
@@ -383,6 +382,7 @@ connection.prototype.send_poll = function(type, id){
 
 }
 connection.prototype.close = function(){
+  var self = this;
   self.sendpacket(adminPackets.ADMIN_QUIT);
   this.sock.end();
 };
