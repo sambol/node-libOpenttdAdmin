@@ -32,7 +32,7 @@ Examples can be found in the `examples/` folder
 
 
 | Function Name       | Description                                                                               | parameters                            |
-| ------------------- | :---------------------------------------------------------------------------------------: | :-----------------------------------: |
+| :------------------ | :--------------------------------------------------------------------------------------- | :----------------------------------- |
 |`authenticate`       | Send and authentication request - this must be performed within 10 seconds of the server connecting |`username` - name of the client (can be null for a default) <br/>`password` - server admin password|
 |`send_rcon`          | Send an rcon command                                                                                |`command` - command to execute on the server |
 |`send_chat`          | Send a chat message                                                                                |`action` - an action from `enums.Actions` <br/> `desttype` - a destination from `enums.DestTypes` <br/> `id` - TODO: Lookup <br/>`msg` - message body|
@@ -42,7 +42,7 @@ Examples can be found in the `examples/` folder
 ## Events
 
 | Event Name          | Description                                                                               | Options                               |
-| ------------------- | :---------------------------------------------------------------------------------------: | :-----------------------------------: |
+| :------------------- | :--------------------------------------------------------------------------------------- | :----------------------------------- |
 |`connect`            | Called when the tcp connection to the server is connected                                 | none |
 |`authenticate`       |Called when successfully authenticated. `welcome` is more useful for connection however    |`version`- I have no idea TODO: Lookup|
 |`welcome`            |Called when the server sends its "welcome packet", which contains info about the server    |`name` - name of the server <br/>`version` - sematic version of the server. ie- 1.4.0-beta2 <br/>`dedicated` - 0 or 1 depending on whether the server is running as a dedicated server<br/> `map` - data about the map (`seed`, `landscape`, `startdate`, `mapheight`, `mapwidth`)|
@@ -64,5 +64,23 @@ Examples can be found in the `examples/` folder
 |`console`            |Fired on receiving output                                                                  |`origin` - origin of the output </br>`output` - body of the output|
       
       
-      
+## Enums
+
+There are several enums provided,these are taken almost directly from yorickvP/node-ottdadmin.
+This is just a list of them. Rather than listing all the entries here, please see `enums.js`
+
++UpdateTypes
++UpdateFrequencies
++CompanyRemoveReasons
++Actions
++DestTypes
++NetworkErrorCodes
     
+## Todo
+Just a little todo for me :)
+
+[x] Write initial documentation
+[ ] Look up unknowns in documentation
+[ ] Break up long switch into functions in another file
+[ ] work out some way of doing tests
+[ ] Proof read everything
