@@ -81,6 +81,6 @@ Just a little todo for me :)
 
 + ~~Write initial documentation~~
 + Look up unknowns in documentation
-+ Break up long switch into functions in another file
++ ~~Break up long switch into functions in another file~~
 + work out some way of doing tests
 + Proof read everything
