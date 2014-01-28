@@ -25,6 +25,7 @@ var Buffers = require('buffers')
 , tcp_enum= require('./enums')
 , adminPackets = tcp_enum.AdminPackets
 , EventEmitter = require('events').EventEmitter
+, parsers = require("./parsers")
 ;
 
 var connection  = function (){
@@ -36,6 +37,13 @@ connection.prototype.sock = false;
 connection.prototype.buffer = Buffers();
 connection.prototype.binaryStreamer = binary()
 
+connection.prototype.makeEvent = function(eventName){
+  var self = this;
+  return function(data){
+    console.log("here");
+    self.emit(eventName, data);
+  };
+}
 
 connection.prototype.connect = function(server, port){
   var self = this;
@@ -51,265 +59,33 @@ connection.prototype.connect = function(server, port){
         .word8('pckttype')
         .tap(function(vars){
           switch(vars.pckttype){
-            case adminPackets.SERVER_PROTOCOL:
-            this
-              .word8("version")
-              .tap(function(vars){
-                self.emit("authenticate", vars);
-              });
-            break;
-            case adminPackets.SERVER_WELCOME:
-              this.into("welcomeData", function(){
+            case adminPackets.SERVER_PROTOCOL:        parsers.protocol(this, self.makeEvent("authenticate"));         break;
+            case adminPackets.SERVER_WELCOME:         parsers.welcome(this, self.makeEvent("welcome"));               break;
+            case adminPackets.SERVER_FULL:            self.error("FULL");                                             break;
+            case adminPackets.SERVER_BANNED:          self.error("BANNED");                                           break;
+            case adminPackets.SERVER_NEWGAME:         self.emit('newgame');                                           break;
+            case adminPackets.SERVER_SHUTDOWN:        self.emit('shutdown');                                          break;
+            case adminPackets.SERVER_DATE:            parsers.date(this, self.makeEvent("date"));                     break;
+            case adminPackets.SERVER_CLIENT_JOIN:     parsers.clientjoin(this, self.makeEvent("clientjoin"));         break;
+            case adminPackets.SERVER_CLIENT_INFO:     parsers.clientinfo(this, self.makeEvent("clientinfo"));         break;
+            case adminPackets.SERVER_CLIENT_UPDATE:   parsers.clientinfo(this, self.makeEvent("clientupdate"));       break;
+            case adminPackets.SERVER_CLIENT_QUIT:     parsers.clientquit(this, self.makeEvent("clientquit"));         break;
+            case adminPackets.SERVER_CLIENT_ERROR:    parsers.clienterror(this, self.makeEvent("clienterror"));       break;
+            case adminPackets.SERVER_COMPANY_INFO:    parsers.companyinfo(this, self.makeEvent("companyinfo"));       break;
+            case adminPackets.SERVER_COMPANY_UPDATE:  parsers.companyupdate(this, self.makeEvent("companyupdate"));   break;
+            case adminPackets.SERVER_COMPANY_REMOVE:  parsers.companyremove(this, self.makeEvent("companyremove"));   break;
+            case adminPackets.SERVER_COMPANY_ECONOMY: parsers.companyeconomy(this, self.makeEvent("companyeconomy")); break;
+            case adminPackets.SERVER_COMPANY_STATS:   parsers.companystats(this, self.makeEvent("companystats"));     break;
+            case adminPackets.SERVER_CHAT:            parsers.chat(this, self.makeEvent("chat"));                     break;
+            case adminPackets.SERVER_RCON:            parsers.rcon(this, self.makeEvent("rcon"));                     break;
+            case adminPackets.SERVER_CONSOLE:         parsers.console(this, self.makeEvent("console"));               break;
+            case adminPackets.SERVER_ERROR:           //Special case
                 this
-                  .scan('name', zeroterm())
-                  .tap(function(vars){ vars.name = vars.name.toString();})
-                  .scan('version', zeroterm())
-                  .tap(function(vars){ vars.version = vars.version.toString();})
-                  .word8('dedicated')
-                  .into("map", function(vars){
-                    this
-                      .scan('name', zeroterm())
-                      .tap(function(vars){ vars.name = vars.name.toString();})
-                      .word32le('seed')
-                      .word8('landscape')
-                      .word32le('startdate')
-                      .word16le('mapheight')
-                      .word16le('mapwidth')
-                  })
-                  .tap(function(welcomeData){
-                    self.emit('welcome', welcomeData)
+                  .word8('code')
+                  .tap(function(vars){
+                    self.error(vars.code);
                   });
-                });
-            
-              break;
-            case adminPackets.SERVER_FULL:
-              this.end();
-              self.error("FULL");
-            break;
-            case adminPackets.SERVER_BANNED:
-              this.end();
-              self.error("BANNED");
-            break;
-            case adminPackets.SERVER_ERROR:
-              this
-                .word8('code')
-                .tap(function(vars){
-                  self.error(vars.code);
-                });
-              break;
-            case adminPackets.SERVER_NEWGAME:
-              self.emit('newgame');
-              break;
-            case adminPackets.SERVER_SHUTDOWN:
-              self.emit('shutdown');
-              break;
-            case adminPackets.SERVER_DATE:
-              this
-                .word32le('date')
-                .tap(function(vars){
-                  self.emit('date', vars.date);
-                });
-              break;
-            case adminPackets.SERVER_CLIENT_JOIN:
-              this
-                .word32le('id')
-                .tap(function(vars){
-                  self.emit('clientjoin', vars.id);
-                });
-              break;
-            case adminPackets.SERVER_CLIENT_INFO:
-              this
-                .into('client', function(){
-                  this
-                  .word32le('id')
-                  .scan('ip', zeroterm())
-                  .tap(function(vars){ vars.ip = vars.ip.toString();})
-                  .scan('name', zeroterm())
-                  .tap(function(vars){ vars.name = vars.name.toString();})
-                  .word8('lang')
-                  .word32le('joindate')
-                  .word8('company')
-                  .tap(function(client){
-                    self.emit('clientinfo', client);
-                  });
-                });
-              break;
-            case adminPackets.SERVER_CLIENT_UPDATE:
-              this.into("client", function(vars){
-                this
-                  .word32le('id')
-                  .scan('name', zeroterm())
-                  .tap(function(vars){ vars.name = vars.name.toString();})
-                  .word8('company')
-                  .tap(function(client){
-                    self.emit('clientupdate', client);
-                  });
-              });
-              break;
-            case adminPackets.SERVER_CLIENT_QUIT:
-              this.into("client", function(vars){
-                this
-                  .word32le('id')
-                  .tap(function(client){
-                    self.emit('clientquit', client.id);
-                  });
-              });
-              break;
-            case adminPackets.SERVER_CLIENT_ERROR:
-              this.into("client", function(vars){
-                this
-                  .word32le('id')
-                  .word8('err')
-                  .tap(function(client){
-                    self.emit('clienterror', client);
-                  });
-              });
-              break;
-            case adminPackets.SERVER_COMPANY_INFO:
-              this.into("company", function(vars){
-
-                this
-                  .word8('id')
-                  .scan('name', zeroterm())
-                  .tap(function(vars){ vars.name = vars.name.toString();})
-                  .scan('manager', zeroterm())
-                  .tap(function(vars){ vars.manager = vars.manager.toString();})
-                  .word8('colour')
-                  .word8('protected')
-                  .word32le('startyear')
-                  .word8('isai')
-                  .tap(function(company){
-                    self.emit('companyinfo', company)
-                  });
-              });
-              break;
-            case adminPackets.SERVER_COMPANY_UPDATE:
-              this.into("company", function(vars){
-                this
-                  .word8('id')
-                  .scan('name', zeroterm())
-                  .tap(function(vars){ vars.name = vars.name.toString();})
-                  .scan('manager', zeroterm())
-                  .tap(function(vars){ vars.manager = vars.manager.toString();})
-                  .word8('colour')
-                  .word8('protected')
-                  .word8('bankruptcy')
-                  .into('shares', function(){
-                    this
-                      .word8('1')
-                      .word8('2')
-                      .word8('3')
-                      .word8('4')
-                  })
-                  .tap(function(company){
-                    self.emit('companyupdate', company);
-                  });
-              });
-              break;
-            case adminPackets.SERVER_COMPANY_REMOVE:
-              this.into("company", function(vars){
-                this
-                  .word8('id')
-                  .word8('reason')
-                  .tap(function(company){
-                    self.emit('companyremove', company);
-                  });
-                });
-              break;
-
-            case adminPackets.SERVER_COMPANY_ECONOMY:
-              this.into("company", function(vars){
-                this
-                  .word8('id')
-                  .word64les('money')
-                  .word64le('loan')
-                  .word64les('income')
-                  .into('lastquarter', function(){
-                    this
-                      .word64le('value')
-                      .word64le('performance')
-                      .word64le('cargo')
-                  })
-                  .into('prevquarter', function(){
-                    this
-                      .word64le('value')
-                      .word64le('performance')
-                      .word64le('cargo')
-                  })
-                  .tap(function(company){
-                    self.emit('companyeconomy', company);
-                  });
-              });
-              break;
-            case adminPackets.SERVER_COMPANY_STATS:
-              this.into("company", function(vars){
-
-                this
-                  .word8('id')
-                  .into('vehicles', function(){
-                    this
-                      .word64le('trains')
-                      .word64le('lorries')
-                      .word64le('busses')
-                      .word64le('planes')
-                      .word64le('ships')
-                  })
-                  .into('stations', function(){
-                    this
-                      .word64le('trains')
-                      .word64le('lorries')
-                      .word64le('busses')
-                      .word64le('planes')
-                      .word64le('ships')
-                  })
-                  .tap(function(company){
-                    self.emit('companystats', company);
-                  });
-              });
-              break;
-            case adminPackets.SERVER_CHAT:
-              this.into('chat', function(){
-                this
-                  .word8('action')
-                  .word8('desttype')
-                  .word32le('id')
-                  .scan('message', zeroterm())
-                  .tap(function(vars){ vars.message = vars.message.toString();})
-                  .word64le('money')
-                  .tap(function(message){
-                    self.emit('chat', message);
-                  });
-              });
-            
-              break;
-            case adminPackets.SERVER_RCON:
-              this.into('rcon', function(){
-                this
-                  .word16('colour')
-                  .scan('output', zeroterm())
-                  .tap(function(vars){ vars.output = vars.output.toString();})
-                  .tap(function(rcon){
-                    self.emit('rcon', rcon);
-                  });
-
-              });
-            
-              break;
-            
-            case adminPackets.SERVER_CONSOLE:
-              this.into('console', function(){
-                this
-                  .scan('origin', zeroterm())
-                  .tap(function(vars){ vars.origin = vars.origin.toString();})
-                  .scan('output', zeroterm())
-                  .tap(function(vars){ vars.output = vars.output.toString();})
-                  .tap(function(rcon){
-                    self.emit('console', console);
-                  });
-              });
-              break;
-            
-            
+                break;        
           }
         });
     });
