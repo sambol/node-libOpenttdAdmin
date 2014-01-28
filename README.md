@@ -43,10 +43,7 @@ Examples can be found in the `examples/` folder
       <td>`authenticate`</td>
       <td>Send and authentication request - this must be performed within 10 seconds of the server connecting </td>
       <td>
-        <ul>
-          <li>`username` - name of the client (can be null for a default)</li>
-          <li>`password` - server admin password</li>
-        </ul>
+        <ul><li>`username` - name of the client (can be null for a default)</li><li>`password` - server admin password</li></ul>
       </td>
     </tr>
     <tr>
@@ -61,9 +58,15 @@ Examples can be found in the `examples/` folder
     </tr>
   </tbody>
 </table>
-        
 
-  
+| Function Name       | Description                                                                               | parameters                            |
+| ------------------- | :---------------------------------------------------------------------------------------: | :-----------------------------------: |
+|`authenticate`       | Send and authentication request - this must be performed within 10 seconds of the server connecting |`username` - name of the client (can be null for a default) <br/>`password` - server admin password|
+|`send_rcon`          | Send an rcon command                                                                                |`command` - command to execute on the server |
+|`send_chat`          | Send a chat message                                                                                |`action` - an action from `enums.Actions` <br/> `desttype` - a destination from `enums.DestTypes` <br/> `id` - TODO: Lookup <br/>`msg` - message body|
+|`send_update_frequency` | Set a new update frequency                                                                     |`type` - type of update (`enums.UpdateTypes`) <br/> `frequency` - frequency of update (`enums.UpdateFrequencies`) |
+
+
 ## Events
 
 | Event Name          | Description                                                                               | Options                               |
