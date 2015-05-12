@@ -193,9 +193,9 @@ module.exports.companyeconomy = function(binaryparser, cb){
   binaryparser.into("company", function(){
     this
       .word8('id')
-      .word64les('money')
+      .word64le('money')
       .word64le('loan')
-      .word64les('income')
+      .word64le('income')
       .into('lastquarter', function(){
         this
           .word64le('value')
